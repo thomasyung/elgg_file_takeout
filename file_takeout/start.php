@@ -2,6 +2,9 @@
 
 elgg_register_event_handler('init', 'system', 'file_takeout_init');
 
+$menu_item = new ElggMenuItem('File Takeout', elgg_echo('File Takeout'), 'file_takeout');
+elgg_register_menu_item('site', $menu_item);
+
 function file_takeout_init() {
 	elgg_register_page_handler('file_takeout','page_handler_file_takeout');
 	elgg_register_page_handler('file_takeout_download', 'page_handler_file_takeout_download');
