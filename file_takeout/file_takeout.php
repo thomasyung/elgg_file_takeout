@@ -59,6 +59,55 @@ __HTML;
 				$blog_contents .= '</channel></rss>';
 				set_input('view', 'default');
 				$zip->addFromString('blog_entries.xml', $blog_contents);
+				// Experimental -- create a file for each blog entry
+				foreach ($blogs as $blog) {
+					$blog_author = get_entity($blog->owner_guid)->name;
+					$blog_pubdate = date('r', $blog->time_created);
+					$blog_filedate = date('Y-m-d', $blog->time_created);
+					$blog_content = <<<__HTML
+<!DOCTYPE html>
+<head>
+<title>$blog->title</title>
+</head>
+<body>
+<article class="post">
+<header>
+<h1>$blog->title</h1>
+<h4 class="post-date">By $blog_author on <time datetime="$blog_pubdate">$blog_pubdate</time></h4>
+</header>
+$blog->description
+
+__HTML;
+					if ($blog->countComments() > 0) {
+						$blog_comments = $blog->getAnnotations('generic_comment');
+						$blog_content .= <<<__HTML
+<section class="post-comments">
+<h1>Comments</h1>
+
+__HTML;
+						foreach ($blog_comments as $blog_comment) {
+							$comment_author = get_entity($blog_comment->owner_guid)->name;
+							$comment_pubdate = date('r', $blog_comment->time_created);
+							$blog_content .= <<<__HTML
+<article>
+<header>
+<h1 class="comment-date">By $comment_author on <time datetime="$comment_pubdate">$comment_pubdate</time></h1>
+</header>
+$blog_comment->value
+</article>
+
+__HTML;
+						}
+						$blog_content .= '<section>';
+					}
+					$blog_content .= <<<__HTML
+
+</article>
+</body>
+</html>
+__HTML;
+					$zip->addFromString($blog_filedate.' '.$blog->title.'.html', $blog_content);
+				}
 			}
 			$zip->close();
 			$area .= '</ul>';
@@ -67,7 +116,7 @@ __HTML;
 	} else {
 		$area .= '<br><p style="color: red;">No files to export.</p>';
 	}
-	$area .= '<br><a href="'.$site_url.'file_takeout">&lt; Back to the File Takeout</a>';
+	$area .= '<br><a href="'.$site_url.'file_takeout">&lt; Back to File Takeout</a>';
 } 
 // Display a listing of all groups that contain files
 else {
